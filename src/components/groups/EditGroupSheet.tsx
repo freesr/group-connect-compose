@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Upload, X } from "lucide-react";
 import { GroupIcon } from "./GroupIcon";
+import { toast } from "sonner";
 
 interface EditGroupSheetProps {
   open: boolean;
@@ -19,7 +20,7 @@ export function EditGroupSheet({ open, onOpenChange, group }: EditGroupSheetProp
   const [groupPicture, setGroupPicture] = useState<string | undefined>();
   const queryClient = useQueryClient();
 
-  // Reset form when group changes
+  // Reset form when group changes or sheet opens
   useEffect(() => {
     if (group && open) {
       setGroupName(group.name);
@@ -38,7 +39,12 @@ export function EditGroupSheet({ open, onOpenChange, group }: EditGroupSheetProp
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["groups"] });
+      toast.success("Group updated successfully");
       handleClose();
+    },
+    onError: (error) => {
+      console.error("Error updating group:", error);
+      toast.error("Failed to update group");
     },
   });
 
@@ -49,6 +55,7 @@ export function EditGroupSheet({ open, onOpenChange, group }: EditGroupSheetProp
   };
 
   const handleClose = () => {
+    // Ensure we're properly cleaning up when closing the sheet
     onOpenChange(false);
   };
 
@@ -62,11 +69,12 @@ export function EditGroupSheet({ open, onOpenChange, group }: EditGroupSheetProp
     setGroupPicture(undefined);
   };
 
+  // Prevent rendering if there's no group
   if (!group) return null;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-md border-l border-gray-800 bg-black text-white">
+      <SheetContent className="w-full sm:max-w-md border-l border-gray-800 bg-black text-white overflow-y-auto">
         <SheetHeader className="pb-4">
           <SheetTitle className="text-white">Edit Group</SheetTitle>
           <p className="text-gray-400 text-sm">
@@ -126,6 +134,7 @@ export function EditGroupSheet({ open, onOpenChange, group }: EditGroupSheetProp
               variant="outline"
               onClick={handleClose}
               className="bg-transparent text-white border-gray-700 hover:bg-gray-900"
+              type="button"
             >
               Cancel
             </Button>
@@ -133,6 +142,7 @@ export function EditGroupSheet({ open, onOpenChange, group }: EditGroupSheetProp
               onClick={handleSave}
               disabled={!groupName.trim() || updateGroupMutation.isPending}
               className="bg-teal-500 text-white hover:bg-teal-600"
+              type="button"
             >
               {updateGroupMutation.isPending ? "Saving..." : "Save"}
             </Button>
