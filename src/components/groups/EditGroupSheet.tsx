@@ -40,7 +40,8 @@ export function EditGroupSheet({ open, onOpenChange, group }: EditGroupSheetProp
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["groups"] });
       toast.success("Group updated successfully");
-      handleClose();
+      // First close the sheet, then reset the form
+      onOpenChange(false);
     },
     onError: (error) => {
       console.error("Error updating group:", error);
@@ -48,14 +49,14 @@ export function EditGroupSheet({ open, onOpenChange, group }: EditGroupSheetProp
     },
   });
 
-  const handleSave = () => {
+  const handleSave = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
     if (groupName.trim()) {
       updateGroupMutation.mutate();
     }
   };
 
   const handleClose = () => {
-    // Ensure we're properly cleaning up when closing the sheet
     onOpenChange(false);
   };
 
@@ -82,7 +83,7 @@ export function EditGroupSheet({ open, onOpenChange, group }: EditGroupSheetProp
           </p>
         </SheetHeader>
 
-        <div className="space-y-6 mt-4">
+        <form className="space-y-6 mt-4" onSubmit={(e) => e.preventDefault()}>
           {/* Group Picture */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-300">Group Picture</label>
@@ -99,6 +100,7 @@ export function EditGroupSheet({ open, onOpenChange, group }: EditGroupSheetProp
                 size="sm" 
                 className="flex items-center gap-2 bg-transparent text-white border-gray-700 hover:bg-gray-900"
                 onClick={handlePictureUpload}
+                type="button"
               >
                 <Upload size={16} />
                 Upload
@@ -109,6 +111,7 @@ export function EditGroupSheet({ open, onOpenChange, group }: EditGroupSheetProp
                   size="sm" 
                   className="flex items-center gap-2 bg-transparent text-white border-gray-700 hover:bg-gray-900"
                   onClick={handlePictureRemove}
+                  type="button"
                 >
                   <X size={16} />
                   Remove
@@ -147,7 +150,7 @@ export function EditGroupSheet({ open, onOpenChange, group }: EditGroupSheetProp
               {updateGroupMutation.isPending ? "Saving..." : "Save"}
             </Button>
           </div>
-        </div>
+        </form>
       </SheetContent>
     </Sheet>
   );
