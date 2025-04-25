@@ -38,10 +38,14 @@ export function EditGroupSheet({ open, onOpenChange, group }: EditGroupSheetProp
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["groups"] });
-      toast.success("Group updated successfully");
-      // First close the sheet, then reset the form
+      // First close the sheet, then run other operations
       onOpenChange(false);
+      
+      // Wait a tick before updating state to prevent UI freeze
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["groups"] });
+        toast.success("Group updated successfully");
+      }, 0);
     },
     onError: (error) => {
       console.error("Error updating group:", error);

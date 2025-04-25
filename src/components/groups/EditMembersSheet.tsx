@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { UserAvatar } from "./UserAvatar";
 import { Search, Users, X } from "lucide-react";
+import { toast } from "sonner";
 
 interface EditMembersSheetProps {
   open: boolean;
@@ -42,9 +43,19 @@ export function EditMembersSheet({ open, onOpenChange, group }: EditMembersSheet
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["groups"] });
-      handleClose();
+      // First close the sheet, then run other operations
+      onOpenChange(false);
+      
+      // Wait a tick before updating state to prevent UI freeze
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["groups"] });
+        toast.success("Members updated successfully");
+      }, 0);
     },
+    onError: (error) => {
+      console.error("Error updating members:", error);
+      toast.error("Failed to update members");
+    }
   });
 
   // Filter users based on search
@@ -62,7 +73,8 @@ export function EditMembersSheet({ open, onOpenChange, group }: EditMembersSheet
     setSelectedUsers(selectedUsers.filter((u) => u.id !== userId));
   };
 
-  const handleSave = () => {
+  const handleSave = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
     updateMembersMutation.mutate();
   };
 
@@ -83,7 +95,7 @@ export function EditMembersSheet({ open, onOpenChange, group }: EditMembersSheet
           </p>
         </SheetHeader>
 
-        <div className="space-y-6 mt-4">
+        <form className="space-y-6 mt-4" onSubmit={(e) => e.preventDefault()}>
           {/* Search Users */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-300">Add user(s)</label>
@@ -125,6 +137,7 @@ export function EditMembersSheet({ open, onOpenChange, group }: EditMembersSheet
                       size="icon"
                       className="h-8 w-8 text-gray-400 hover:text-white hover:bg-gray-800"
                       onClick={() => handleUserRemove(user.id)}
+                      type="button"
                     >
                       <X size={16} />
                     </Button>
@@ -168,6 +181,7 @@ export function EditMembersSheet({ open, onOpenChange, group }: EditMembersSheet
               variant="outline"
               onClick={handleClose}
               className="bg-transparent text-white border-gray-700 hover:bg-gray-900"
+              type="button"
             >
               Cancel
             </Button>
@@ -175,11 +189,12 @@ export function EditMembersSheet({ open, onOpenChange, group }: EditMembersSheet
               onClick={handleSave}
               disabled={updateMembersMutation.isPending}
               className="bg-teal-500 text-white hover:bg-teal-600"
+              type="button"
             >
               {updateMembersMutation.isPending ? "Saving..." : "Save"}
             </Button>
           </div>
-        </div>
+        </form>
       </SheetContent>
     </Sheet>
   );
